@@ -1,0 +1,83 @@
+---
+swagger: "2.0"
+info:
+  x-ibm-name: "api-exe1-users"
+  title: "API EXE1 Users"
+  version: "1.0.0"
+schemes:
+- "https"
+host: "$(catalog.host)"
+basePath: "/workshop/exe1"
+consumes:
+- "application/json"
+produces:
+- "application/json"
+securityDefinitions:
+  clientIdHeader:
+    type: "apiKey"
+    in: "header"
+    name: "X-IBM-Client-Id"
+security:
+- clientIdHeader: []
+x-ibm-configuration:
+  testable: true
+  enforced: true
+  cors:
+    enabled: true
+  assembly:
+    execute:
+    - operation-switch:
+        title: "operation-switch"
+        case:
+        - operations:
+          - verb: "get"
+            path: "/users"
+          execute:
+          - invoke:
+              title: "invoke"
+              timeout: 60
+              verb: "GET"
+              cache-response: "protocol"
+              cache-ttl: 900
+              version: "1.0.0"
+              target-url: "$(typicodeTargetUrl)/users"
+        - operations:
+          - verb: "get"
+            path: "/users/{id}"
+          execute:
+          - invoke:
+              title: "invoke"
+              timeout: 60
+              verb: "GET"
+              cache-response: "protocol"
+              cache-ttl: 900
+              version: "1.0.0"
+              target-url: "$(typicodeTargetUrl)/users/$(request.parameters.id)"
+        otherwise: []
+        version: "1.0.0"
+    catch: []
+  phase: "realized"
+  properties:
+    typicodeTargetUrl:
+      value: "https://jsonplaceholder.typicode.com"
+      description: ""
+      encoded: false
+paths:
+  /users:
+    get:
+      responses:
+        200:
+          description: "200 OK"
+  /users/{id}:
+    get:
+      responses:
+        200:
+          description: "200 OK"
+    parameters:
+    - name: "id"
+      type: "string"
+      required: true
+      in: "path"
+      description: "ID Del Usuario"
+definitions: {}
+tags: []

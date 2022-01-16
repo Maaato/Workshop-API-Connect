@@ -1,0 +1,152 @@
+---
+swagger: "2.0"
+info:
+  x-ibm-name: "api-exe2-pets"
+  title: "API EXE2 Pets"
+  version: "1.0.0"
+schemes:
+- "https"
+host: "$(catalog.host)"
+basePath: "/workshop/exe2"
+consumes:
+- "application/json"
+produces:
+- "application/json"
+securityDefinitions:
+  clientSecret:
+    type: "apiKey"
+    description: ""
+    in: "header"
+    name: "X-IBM-Client-Secret"
+  clientIdHeader:
+    type: "apiKey"
+    in: "header"
+    name: "X-IBM-Client-Id"
+security:
+- clientIdHeader: []
+  clientSecret: []
+x-ibm-configuration:
+  testable: true
+  enforced: true
+  cors:
+    enabled: true
+  assembly:
+    execute:
+    - gatewayscript:
+        title: "gatewayscript"
+        version: "1.0.0"
+        source: "var options = [\"available\",\"pending\",\"sold\"]\nvar status =\
+          \ apim.getvariable(\"request.parameters.status\")\nif(!options.includes(status)){\n\
+          \    throw new RangeError(`Status ${status} no es valido`)\n}\n"
+    - invoke:
+        title: "invoke Pet Store"
+        timeout: 60
+        verb: "GET"
+        cache-response: "protocol"
+        cache-ttl: 900
+        stop-on-error:
+        - null
+        version: "1.0.0"
+        target-url: "$(PetStoreTargetUrl)/v2/pet/findByStatus?status=$(request.parameters.status)"
+        output: "petStatusRes"
+    - map:
+        title: "map"
+        inputs:
+          input:
+            schema:
+              type: "array"
+              description: ""
+              items:
+                type: "object"
+                properties:
+                  id:
+                    type: "number"
+                    name: "id"
+                  category:
+                    type: "object"
+                    properties:
+                      id:
+                        type: "number"
+                        name: "id"
+                      name:
+                        type: "string"
+                        name: "name"
+                    name: "category"
+                  name:
+                    type: "string"
+                    name: "name"
+                  photoUrls:
+                    type: "array"
+                    items:
+                      type: "string"
+                    name: "photoUrls"
+                  tags:
+                    type: "array"
+                    items:
+                      properties:
+                        id:
+                          type: "number"
+                          name: "id"
+                        name:
+                          type: "string"
+                          name: "name"
+                      type: "object"
+                    name: "tags"
+                  status:
+                    type: "string"
+                    name: "status"
+            variable: "petStatusRes.body"
+            content: "application/json"
+        outputs:
+          output:
+            schema:
+              $ref: "#/definitions/PetStatusRes"
+            variable: "message.body"
+            content: "application/json"
+        actions:
+        - create: "output"
+          foreach: "input"
+          from: "input"
+          actions:
+          - set: "id"
+            from: "id"
+          - set: "nombre"
+            from: "name"
+          - set: "status"
+            from: "status"
+        version: "1.0.0"
+    catch:
+    - errors: []
+      execute: []
+  phase: "realized"
+  properties:
+    PetStoreTargetUrl:
+      value: "https://petstore.swagger.io"
+      description: ""
+      encoded: false
+paths:
+  /pets/{status}:
+    get:
+      responses:
+        200:
+          description: "200 OK"
+    parameters:
+    - name: "status"
+      type: "string"
+      required: true
+      in: "path"
+      description: "Status de la mascota"
+definitions:
+  PetStatusRes:
+    type: "array"
+    description: ""
+    items:
+      type: "object"
+      properties:
+        id:
+          type: "number"
+        nombre:
+          type: "string"
+        status:
+          type: "string"
+tags: []
